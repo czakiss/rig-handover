@@ -12,6 +12,16 @@ export function createApp(config: RigConfig = loadConfig()) {
 
   app.get('/health', (c) => c.json({ ok: true, lane: lane().id }));
 
+  // The same rows as the page (plan.md § 2b): one readNight, so the two can
+  // never disagree (ADR 0001). Missing night -> 404; empty file -> [].
+  app.get('/api/digest/:night', (c) => {
+    const rows = readNight(config.runsDir, c.req.param('night'));
+    if (rows === null) {
+      return c.json({ error: 'no runs for this night' }, 404);
+    }
+    return c.json(rows);
+  });
+
   app.get('/', (c) =>
     c.html(
       <Layout title="status" lane={lane()}>
