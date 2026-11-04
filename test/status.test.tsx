@@ -13,6 +13,18 @@ describe('status board', () => {
     expect(html).toContain('2026-10-28');
   });
 
+  it('links each night to its digest with its line-level ok/retry/fail counts', async () => {
+    const res = await createApp(config).request('/');
+    const html = await res.text();
+    expect(res.status).toBe(200);
+    expect(html).toContain('href="/digest/2026-10-27"');
+    expect(html).toContain('href="/digest/2026-10-28"');
+    // per line, not per job: 2026-10-28 folds into 5 rows but counts 15 good
+    // lines (the 16th is truncated); 2026-10-27 is 7 ok lines
+    expect(html).toContain('ok: 7 · retry: 0 · fail: 0');
+    expect(html).toContain('ok: 10 · retry: 4 · fail: 1');
+  });
+
   it('health answers with the lane id', async () => {
     const res = await createApp(config).request('/health');
     expect(await res.json()).toEqual({ ok: true, lane: 'lane-07' });

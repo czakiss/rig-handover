@@ -1,12 +1,21 @@
 import { readdirSync } from 'node:fs';
 import type { RigConfig } from './config.js';
+import { nightCounts, type NightCounts } from './digest/counts.js';
 import { lastBeat, type Beat } from './heartbeat.js';
+
+// One night on the board: the bare date (the digest link) and its line-level
+// counts. counts is null when the night's log can't be counted at render
+// time; the view shows the em dash for it.
+export type NightOnBoard = {
+  night: string;
+  counts: NightCounts | null;
+};
 
 export type Status = {
   adapter: string;
   installed: string;
   lastBeat: Beat | null;
-  nights: string[];
+  nights: NightOnBoard[];
 };
 
 // Nights on disk = runs/<YYYY-MM-DD>.jsonl, newest first.
@@ -27,6 +36,9 @@ export function readStatus(config: RigConfig): Status {
     adapter: config.adapter,
     installed: config.installed,
     lastBeat: lastBeat(),
-    nights: nightsOnDisk(config.runsDir),
+    nights: nightsOnDisk(config.runsDir).map((night) => ({
+      night,
+      counts: nightCounts(config.runsDir, night),
+    })),
   };
 }
